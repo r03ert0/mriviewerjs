@@ -1,0 +1,18 @@
+<html>
+<body>
+
+<div id='viewer'></div>
+
+<script src='http://localhost/libs/jquery/3.1.1/jquery.min.js'></script>
+<script src='http://localhost/mriviewerjs/mriviewer.js'></script>
+<script>
+    var mv=new MRIViewer({
+            //mriPath: 'http://localhost/reorient/data/sloth_bear.nii.gz',
+            mriPath: 'http://localhost/mrijs/data/2dseq-1.nii.gz',
+            elem: $('#viewer').get(0)
+        });
+    mv.display();
+</script>
+
+</body>
+</html>
