@@ -1,0 +1,24 @@
+<html>
+<body>
+
+<div id='viewer1'></div>
+<div id='viewer2'></div>
+<div id='viewer3'></div>
+
+<script src='http://localhost/libs/jquery/3.1.1/jquery.min.js'></script>
+<script src='http://localhost/mriviewerjs/mriviewer.js'></script>
+<script>
+var mv=new MRIViewer({
+        //mriPath: 'http://localhost/reorient/data/sloth_bear.nii.gz',
+        mriPath: 'http://localhost/mrijs/data/2dseq-1.nii.gz',
+        views: [
+            { elem: $('#viewer1').get(0), plane: 'sag' },
+            { elem: $('#viewer2').get(0), plane: 'cor' },
+            { elem: $('#viewer3').get(0), plane: 'axi' }
+        ]
+    });
+mv.display();
+</script>
+
+</body>
+</html>
