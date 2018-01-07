@@ -6,12 +6,18 @@
 <script src='http://localhost/libs/jquery/3.1.1/jquery.min.js'></script>
 <script src='http://localhost/mriviewerjs/mriviewer.js'></script>
 <script>
-    var mv=new MRIViewer({
-            //mriPath: 'http://localhost/reorient/data/sloth_bear.nii.gz',
-            mriPath: 'http://localhost/mrijs/data/2dseq-1.nii.gz',
-            elem: $('#viewer').get(0)
-        });
-    mv.display();
+var mv=new MRIViewer({
+        //mriPath: 'http://localhost/reorient/data/sloth_bear.nii.gz',
+        //mriPath: 'http://localhost/mrijs/data/2dseq-1.nii.gz',
+        mriPath: 'http://localhost/mrijs/data/crop.nii.gz',
+        views: [{
+            elem: $('#viewer').get(0),
+            plane: 'sag',
+            addPlaneSelect: true,
+            addSpaceSelect: true
+        }]
+    });
+mv.display();
 </script>
 
 </body>
