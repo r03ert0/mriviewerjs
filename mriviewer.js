@@ -529,6 +529,11 @@ function MRIViewer(myParams) {
           */
         A2Value: function A2Value(a) {
             const v = me.mri.multMatVec(me.mri.MatrixMm2Vox, a);
+            const dim = me.mri.dim;
+            const [x, y, z] = [parseInt(v[0]), parseInt(v[1]), parseInt(v[2])];
+            if(x<0 || x>=dim[0] || y<0 || y>=dim[1] || z<0 || z>=dim[2]) {
+                return 0;
+            }
 
             return me.trilinear(v[0], v[1], v[2]);
         },
