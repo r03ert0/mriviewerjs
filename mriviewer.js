@@ -591,7 +591,7 @@ function MRIViewer(myParams) {
                             c = [val, val, val, 255];
                         }
                     } else {
-                        c=[255,0,0,255];
+                        c=[0,0,0,100];
                     }
 
                     if( y === parseInt(H/2) || x === parseInt(W/2)) {
