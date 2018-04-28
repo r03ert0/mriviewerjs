@@ -78,7 +78,9 @@ function MRIViewer(myParams) {
                     me.configureDimensions();
 
                     // Set default space
-                    me.space = 'absolute';
+                    if(!me.space) {
+                        me.space = 'absolute';
+                    }
 
                     // Set view defaults
                     for(view of me.views) {
@@ -188,6 +190,7 @@ function MRIViewer(myParams) {
                 view.slice = parseInt((D - 1)/2);
                 view.slider.max = view.maxSlice;
                 view.slider.value = view.slice;
+                console.log("plane:", view.plane, "max slice:", view.slider.max, "actual slice:", view.slider.value);
             }
         },
 
@@ -312,15 +315,18 @@ function MRIViewer(myParams) {
             var corBtn = view.elem.getElementsByClassName('cor-btn')[0];
             sagBtn.addEventListener('click', function () {
                 me.setPlane(view, 'sag');
-                view.slider.max = me.dimensions[me.space].sag.maxSlice;
+                //view.slider.max = me.dimensions[me.space].sag.maxSlice;
+                me.configureSliders();
             });
             axiBtn.addEventListener('click', function () {
                 me.setPlane(view, 'axi');
-                view.slider.max = me.dimensions[me.space].axi.maxSlice;
+                //view.slider.max = me.dimensions[me.space].axi.maxSlice;
+                me.configureSliders();
             });
             corBtn.addEventListener('click', function () {
                 me.setPlane(view, 'cor');
-                view.slider.max = me.dimensions[me.space].cor.maxSlice;
+                //view.slider.max = me.dimensions[me.space].cor.maxSlice;
+                me.configureSliders();
             });
         },
 
@@ -426,11 +432,29 @@ function MRIViewer(myParams) {
 */
         },
 
+        /**
+          * @func S2I
+          * @description Convert screen coordinates to voxel index
+          * @param s array Screen coordinates x, y and slice
+          * @return number The voxel index, from 0 to the total dim0*dim1*dim2-1
+          */
         S2I: function S2I(s) {
           var s2v = me.mri.s2v;
           var v = [s2v.X + s2v.dx * s[ s2v.x ], s2v.Y + s2v.dy * s[ s2v.y ], s2v.Z + s2v.dz * s[ s2v.z ]];
           var index = v[0] + v[ 1 ] * me.mri.dim[0] + v[ 2 ] * me.mri.dim[0] * me.mri.dim[ 1 ];
-          return index;
+          return index|0;
+        },
+
+        /**
+          * @func S2IJK
+          * @description Convert screen coordinates to voxel coordinates
+          * @param s array Screen coordinates x, y and slice
+          * @return array The voxel coordinates [i, j, k], 0<=j<i<dim0, 0<=k<dim2
+          */
+        S2IJK: function S2IJK(s) {
+          var s2v = me.mri.s2v;
+          var v = [s2v.X + s2v.dx * s[ s2v.x ], s2v.Y + s2v.dy * s[ s2v.y ], s2v.Z + s2v.dz * s[ s2v.z ]];
+          return [v[0]|0, v[1]|0, v[2]|0];
         },
 
         drawScreenSpace: function drawScreenSpace(view) {
@@ -756,6 +780,9 @@ function MRIViewer(myParams) {
     me.mriPath = myParams.mriPath;
     me.mriFile = myParams.mriFile;
     me.views = myParams.views;
+    if(myParams.space) {
+        me.space = myParams.space;
+    }
 
     return me;
 }
