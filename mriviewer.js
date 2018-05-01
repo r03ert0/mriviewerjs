@@ -457,6 +457,21 @@ function MRIViewer(myParams) {
           return [v[0]|0, v[1]|0, v[2]|0];
         },
 
+        /**
+          * @func IJK2S
+          * @description Convert voxel coordinates to screen coordinates
+          * @param s array Voxel coordinates i, j and k
+          * @return array The screen coordinates [x, y, slice]
+          */
+        IJK2S: function IJK2S(ijk) {
+          var s2v = me.mri.s2v;
+          var s = [];
+          s[ s2v.x ] = (ijk[0] - s2v.X)/s2v.dx;
+          s[ s2v.y ] = (ijk[1] - s2v.Y)/s2v.dy;
+          s[ s2v.z ] = (ijk[2] - s2v.Z)/s2v.dz;
+          return [s[0]|0, s[1]|0, s[2]|0];
+        },
+
         drawScreenSpace: function drawScreenSpace(view) {
             const {plane, slice} = view;
             var x, y, i;
