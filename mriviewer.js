@@ -608,7 +608,6 @@ function MRIViewer(myParams) {
                 view.offPixelBuffer = view.offContext.getImageData(0, 0, W, H);
             }
 
-            console.log(W,H,D,pix);
             for (y = 0; y <= H; y++) {
                 for (x = 0; x <= W; x++) {
                     switch (plane) {
