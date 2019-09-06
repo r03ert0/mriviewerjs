@@ -136,7 +136,7 @@ function MRIViewer(myParams) {
             let view, views = ['sag', 'cor', 'axi'];
             let dimensions = {};
             let maxpix = Math.max(...me.mri.s2v.wpixdim);
-            let max = Math.round(1.5 * Math.max(...me.mri.s2v.sdim.map((o)=>o*maxpix)));
+            let max = Math.round(1.3 * Math.max(...me.mri.s2v.sdim));
 
             dimensions = {
                 voxel: {
@@ -597,7 +597,7 @@ function MRIViewer(myParams) {
             let {plane, slice} = view;
             var x, y, i;
             var val;
-            let {W, H, D, Wdim, Hdim} = me.dimensions.absolute[plane];
+            let {W, H, D, Wdim: pix} = me.dimensions.absolute[plane];
             var a, w2v = me.mri.mm2vox;
             var c, sz = me.mri.dim[0] * me.mri.dim[ 1 ] * me.mri.dim[ 2 ];
 
@@ -608,13 +608,17 @@ function MRIViewer(myParams) {
                 view.offPixelBuffer = view.offContext.getImageData(0, 0, W, H);
             }
 
+            console.log(W,H,D,pix);
             for (y = 0; y <= H; y++) {
                 for (x = 0; x <= W; x++) {
                     switch (plane) {
-                        case 'sag': a = [slice - parseInt(D/2), x - parseInt(W/2), parseInt(H/2) - 1 - y]; break;
-                        case 'cor': a = [x - parseInt(W/2), slice - parseInt(D/2), parseInt(H/2) - 1 - y]; break;
-                        case 'axi': a = [x - parseInt(W/2), parseInt(H/2) - 1 - y, slice - parseInt(D/2)]; break;
+                        case 'sag': a = [(slice - parseInt(D/2)), (x - parseInt(W/2)), (parseInt(H/2) - 1 - y)]; break;
+                        case 'cor': a = [(x - parseInt(W/2)), (slice - parseInt(D/2)), (parseInt(H/2) - 1 - y)]; break;
+                        case 'axi': a = [(x - parseInt(W/2)), (parseInt(H/2) - 1 - y), (slice - parseInt(D/2))]; break;
                     }
+                    a[0]*=pix;
+                    a[1]*=pix;
+                    a[2]*=pix;
                     i = me.A2I(a);
                     if(i) {
                         // Draw 1d (anatomy) and 3d (colour dti) voxels
