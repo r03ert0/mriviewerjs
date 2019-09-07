@@ -4,7 +4,7 @@ function MRIViewer(myParams) {
     var me = {
         mriPath: null,          // Path to mri
         //mrijs_url: 'http://localhost/mrijs/mri.js',
-        mrijs_url: 'https://cdn.jsdelivr.net/gh/r03ert0/mrijs/mri.js',
+        mrijs_url: 'https://cdn.jsdelivr.net/gh/r03ert0/mrijs@0.1.0/mri.js',
         mri: null,              // Mri data
         views: [],              // views on the data
         space: null,            // Space: voxel, world or absolute
