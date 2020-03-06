@@ -79,7 +79,7 @@ function MRIViewer(myParams) {
 
                     // Set default space
                     if(!me.space) {
-                        me.space = 'absolute';
+                        me.space = 'world';
                     }
 
                     // Set view defaults
@@ -333,8 +333,8 @@ function MRIViewer(myParams) {
         addSpaceSelectUI: function addSpaceSelectUI(view) {
             view.elem.insertAdjacentHTML('beforeend', [
                 '<select class="spa-btn">',
-                    '<option value="absolute">Absolute</option>',
                     '<option value="world">World</option>',
+                    '<option value="absolute">Absolute</option>',
                     '<option value="voxel">Voxel</option>',
                 '</select>'
             ].join('\n'));
@@ -633,7 +633,7 @@ function MRIViewer(myParams) {
                             c = [val, val, val, 255];
                         }
                     } else {
-                        c=[0,0,0,100];
+                        c=[130,60,60,255];
                     }
 
                     if( y === parseInt(H/2) || x === parseInt(W/2)) {
