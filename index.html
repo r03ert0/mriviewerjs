@@ -1,24 +1,34 @@
-<html>
-<body>
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>MRI viewer</title>
+    </head>
 
-<div id='viewer'></div>
 
-<script src='http://localhost/libs/jquery/3.1.1/jquery.min.js'></script>
-<script src='http://localhost/mriviewerjs/mriviewer.js'></script>
-<script>
-var mv=new MRIViewer({
-        //mriPath: 'http://localhost/reorient/data/sloth_bear.nii.gz',
-        //mriPath: 'http://localhost/mrijs/data/2dseq-1.nii.gz',
-        mriPath: 'http://localhost/mrijs/data/crop.nii.gz',
-        views: [{
-            elem: $('#viewer').get(0),
-            plane: 'sag',
-            addPlaneSelect: true,
-            addSpaceSelect: true
-        }]
-    });
-mv.display();
-</script>
+    <body>
 
-</body>
+        <div id='viewer'></div>
+
+        <!--<script src='http://localhost/libs/jquery/3.1.1/jquery.min.js'></script>-->
+        <!--<script src='http://localhost/mriviewerjs_k4t/mriviewer.js'></script>-->
+
+        <script src='https://cdn.jsdelivr.net/npm/jquery@3.1.1/dist/jquery.min.js'></script>
+        <script src='https://cdn.jsdelivr.net/gh/r03ert0/mriviewerjs@0.1.1/mriviewer.js'></script>
+        <script src='https://cdn.jsdelivr.net/gh/r03ert0/muijs/mui.js'></script>
+
+
+        <script>
+            var mv=new MRIViewer({
+                    mriPath: '/data/sloth_bear_cropped.nii.gz',
+                    views: [{
+                        elem: $('#viewer').get(0),
+                        plane: 'sag',
+                        addPlaneSelect: true,
+                        addSpaceSelect: true
+                    }]
+                });
+            mv.display();
+        </script>
+
+    </body>
 </html>
