@@ -23,14 +23,10 @@ function MRIViewer(myParams) {
         s.onload = function () {
           console.log('Loaded', path);
           resolve();
-
-          return;
         };
         s.onerror = function () {
           console.error('ERROR');
           reject();
-
-          return;
         };
 
         document.body.appendChild(s);
@@ -54,8 +50,7 @@ function MRIViewer(myParams) {
 
     configure: function configure(updateProgress) {
     // Display loading message
-      let view;
-      for(view of me.views) {
+      for(const view of me.views) {
         view.innerHTML = '<b>Loading...</b>';
       }
 
@@ -68,24 +63,22 @@ function MRIViewer(myParams) {
               return me.mri.loadMRIFromPath(me.mriPath, updateProgress);
             } else if(me.mriFile) {
               return me.mri.loadMRIFromFile(me.mriFile);
-            } else {
-              reject("No data to load");
             }
+            reject(new Error("No data to load"));
           })
           .then(() => {
-            let slice, i, arr;
-            let view;
+            let arr, i, slice;
 
             // configure dimensions
             me.configureDimensions();
 
             // Set default space
             if(!me.space) {
-              me.space = 'world';
+              me.space = 'absolute';
             }
 
             // Set view defaults
-            for(view of me.views) {
+            for(const view of me.views) {
               me.makeGUI(view);
               if(view.addPlaneSelect) {
                 me.addPlaneSelectUI(view);
@@ -93,12 +86,12 @@ function MRIViewer(myParams) {
               if(view.addSpaceSelect) {
                 me.addSpaceSelectUI(view);
               }
-              view.canvas = view.elem.getElementsByTagName('canvas')[0];
-              view.slider = view.elem.getElementsByClassName('slice')[0];
+              [view.canvas] = view.elem.getElementsByTagName('canvas');
+              [view.slider] = view.elem.getElementsByClassName('slice');
               view.maxSlice = me.dimensions[me.space][view.plane].D - 1;
 
               // Create view's offscreen canvas, and get their contexts
-              view.offCanvas = document.createElement('canvas'),
+              view.offCanvas = document.createElement('canvas');
               view.offContext = view.offCanvas.getContext('2d');
             }
 
@@ -109,7 +102,7 @@ function MRIViewer(myParams) {
             me.configureSliders();
 
             // Configure information
-            for(view of me.views) {
+            for(const view of me.views) {
               me.configureInformation(view);
             }
 
@@ -118,7 +111,7 @@ function MRIViewer(myParams) {
             for (i = 0; i < me.mri.data.length; i += parseInt(me.mri.data.length / 10000)) {
               arr.push(me.mri.data[i]);
             }
-            arr = arr.sort(function (a, b) { return a - b;});
+            arr = arr.sort(function (a, b) { return a - b; });
             me.maxValue = arr[9999];
 
             // Draw
@@ -133,9 +126,9 @@ function MRIViewer(myParams) {
     },
 
     configureDimensions: function configureDimensions() {
-      let dim, pixdim;
-      let space, spaces = ['voxel', 'world', 'absolute'];
-      let view, views = ['sag', 'cor', 'axi'];
+      let space;
+      const spaces = ['voxel', 'world', 'absolute'];
+      const views = ['sag', 'cor', 'axi'];
       let dimensions = {};
       let maxpix = Math.max(...me.mri.s2v.wpixdim);
       let max = Math.round(1.3 * Math.max(...me.mri.s2v.sdim));
@@ -156,13 +149,10 @@ function MRIViewer(myParams) {
       };
 
       for(space of spaces) {
-        for(view of views) {
-          dim = dimensions[space].dim;
-          pixdim = dimensions[space].pixdim;
-          dimensions[space].sag = { W: dim[1], H: dim[2], D: dim[0], Wdim: pixdim[1], Hdim: pixdim[2] };
-          dimensions[space].cor = { W: dim[0], H: dim[2], D: dim[1], Wdim: pixdim[0], Hdim: pixdim[2] };
-          dimensions[space].axi = { W: dim[0], H: dim[1], D: dim[2], Wdim: pixdim[0], Hdim: pixdim[1] };
-        }
+        const {dim, pixdim} = dimensions[space];
+        dimensions[space].sag = { W: dim[1], H: dim[2], D: dim[0], Wdim: pixdim[1], Hdim: pixdim[2] };
+        dimensions[space].cor = { W: dim[0], H: dim[2], D: dim[1], Wdim: pixdim[0], Hdim: pixdim[2] };
+        dimensions[space].axi = { W: dim[0], H: dim[1], D: dim[2], Wdim: pixdim[0], Hdim: pixdim[1] };
       }
       me.dimensions = dimensions;
     },
@@ -170,12 +160,13 @@ function MRIViewer(myParams) {
     /**
     * @desc Configure canvas size for all views based on volume dimensions and
     *   display space. Also, set the slice sliders to their default position
+    * @returns {void}
     */
     configureCanvasSize: function configureCanvasSize() {
       let view;
       // Set canvas size and default slices (mid-volume)
       for(view of me.views) {
-        const {W, H, D, Wdim, Hdim} = me.dimensions[me.space][view.plane];
+        const {W, H, Wdim, Hdim} = me.dimensions[me.space][view.plane];
         view.canvas.width = W;
         view.canvas.height = H * Hdim / Wdim;
       }
@@ -183,12 +174,14 @@ function MRIViewer(myParams) {
 
     /**
     * @desc Configure slice sliders to their default position for all views
+    * @returns {void}
     */
     configureSliders: function configureSliders() {
       let view;
       // Set canvas size and default slices (mid-volume)
       for(view of me.views) {
-        const {W, H, D, Wdim, Hdim} = me.dimensions[me.space][view.plane];
+        //const {W, H, D, Wdim, Hdim} = me.dimensions[me.space][view.plane];
+        const {D} = me.dimensions[me.space][view.plane];
         view.slice = parseInt((D - 1)/2);
         view.slider.max = view.maxSlice;
         view.slider.value = view.slice;
@@ -197,11 +190,13 @@ function MRIViewer(myParams) {
     },
 
     configureInformation: function configureInformation(view) {
-      var N = view.elem.getElementsByClassName('N')[0],
-        L = view.elem.getElementsByClassName('L')[0],
-        R = view.elem.getElementsByClassName('R')[0],
-        S = view.elem.getElementsByClassName('S')[0],
-        I = view.elem.getElementsByClassName('I')[0];
+      const [N, L, R, S, I] = [
+        view.elem.querySelector('.N'),
+        view.elem.querySelector('.L'),
+        view.elem.querySelector('.R'),
+        view.elem.querySelector('.S'),
+        view.elem.querySelector('.I')
+      ];
 
       // Configure plane information
       switch (me.space) {
@@ -289,7 +284,7 @@ function MRIViewer(myParams) {
       view.elem.style.position = 'relative';
       view.elem.innerHTML = [
         '<div class="wrap" style="position:relative;display:inline-block">',
-        '<canvas class="viewer" style="width:512px;background:grey"></canvas>',
+        '<canvas class="viewer" style="width:512px;background:rgb(44, 77, 124)"></canvas>',
         '<div class="info" style="position:absolute;top:0;left:0;width:100%;height:100%;color:white;pointer-events:none;user-select: none">',
         '<b class="N" style="position:absolute;top:0;left:0"></b>',
         '<b class="L" style="position:absolute;top:50%;left:0;color:white"></b>',
@@ -300,9 +295,9 @@ function MRIViewer(myParams) {
         '</div>',
         '<br />',
         '<input class="slice" type="range" step="any" style="width:100%"></input>',
-        '<br />',
+        '<br />'
       ].join('\n');
-      var slice = view.elem.getElementsByClassName('slice')[0];
+      var [slice] = view.elem.getElementsByClassName('slice');
       slice.addEventListener('input', function () { me.setSlice(view, parseInt(this.value)); });
     },
 
@@ -310,11 +305,11 @@ function MRIViewer(myParams) {
       view.elem.insertAdjacentHTML('beforeend', [
         '<button class="sag-btn">Sagittal</button>',
         '<button class="axi-btn">Axial</button>',
-        '<button class="cor-btn">Coronal</button>',
+        '<button class="cor-btn">Coronal</button>'
       ].join('\n'));
-      var sagBtn = view.elem.getElementsByClassName('sag-btn')[0];
-      var axiBtn = view.elem.getElementsByClassName('axi-btn')[0];
-      var corBtn = view.elem.getElementsByClassName('cor-btn')[0];
+      var [sagBtn] = view.elem.getElementsByClassName('sag-btn');
+      var [axiBtn] = view.elem.getElementsByClassName('axi-btn');
+      var [corBtn] = view.elem.getElementsByClassName('cor-btn');
       sagBtn.addEventListener('click', function () {
         me.setPlane(view, 'sag');
         //view.slider.max = me.dimensions[me.space].sag.maxSlice;
@@ -335,12 +330,12 @@ function MRIViewer(myParams) {
     addSpaceSelectUI: function addSpaceSelectUI(view) {
       view.elem.insertAdjacentHTML('beforeend', [
         '<select class="spa-btn">',
-        '<option value="world">World</option>',
         '<option value="absolute">Absolute</option>',
+        '<option value="world">World</option>',
         '<option value="voxel">Voxel</option>',
         '</select>'
       ].join('\n'));
-      var spaBtn = view.elem.getElementsByClassName('spa-btn')[0];
+      var [spaBtn] = view.elem.getElementsByClassName('spa-btn');
       spaBtn.addEventListener('change', function () {
         me.setSpace(this.value);
       });
@@ -367,22 +362,23 @@ function MRIViewer(myParams) {
             me.drawAbsoluteSpace(view);
             break;
         }
+
         /*
-    let ctx = view.canvas.getContext("2d");
-    let image = new Image();
-    image.onload = function(){
-      ctx.drawImage(image, 0, 0);
-    };
-    image.src = imgData;
+        let ctx = view.canvas.getContext("2d");
+        let image = new Image();
+        image.onload = function(){
+          ctx.drawImage(image, 0, 0);
+        };
+        image.src = imgData;
 */
       }
     },
 
     drawVoxelSpace: function drawVoxelSpace(view) {
       const {plane, slice} = view;
-      const dim = me.mri.dim;
-      const {W, H, D, Wdim, Hdim} = me.dimensions.voxel[plane];
-      let i, c, s, val;
+      const {dim} = me.mri;
+      const {W, H} = me.dimensions.voxel[plane];
+      let c, i, s, val;
       let x, y;
 
       // Check if offscreen canvas size needs to be updated
@@ -418,30 +414,31 @@ function MRIViewer(myParams) {
           }
 
           i = (y * view.offCanvas.width + x) * 4;
-          view.offPixelBuffer.data[i]  = c[0];
+          view.offPixelBuffer.data[i] = c[0];
           view.offPixelBuffer.data[i + 1] = c[1];
           view.offPixelBuffer.data[i + 2] = c[2];
           view.offPixelBuffer.data[i + 3] = c[3];
         }
       }
-      let ctx = view.canvas.getContext("2d");
+      const ctx = view.canvas.getContext("2d");
       ctx.putImageData(view.offPixelBuffer, 0, 0);
-      /*
-    view.offContext.putImageData(view.offPixelBuffer, 0, 0);
-    let imageData = me.offCanvas.toDataURL();
 
-    return imageData;
+      /*
+      view.offContext.putImageData(view.offPixelBuffer, 0, 0);
+      let imageData = me.offCanvas.toDataURL();
+
+      return imageData;
 */
     },
 
     /**
     * @func S2I
     * @description Convert screen coordinates to voxel index
-    * @param s array Screen coordinates x, y and slice
-    * @return number The voxel index, from 0 to the total dim0*dim1*dim2-1
+    * @param {array} s Screen coordinates x, y and slice
+    * @return {number} The voxel index, from 0 to the total dim0*dim1*dim2-1
     */
     S2I: function S2I(s) {
-      var s2v = me.mri.s2v;
+      var {s2v} = me.mri;
       var v = [s2v.X + s2v.dx * s[s2v.x], s2v.Y + s2v.dy * s[s2v.y], s2v.Z + s2v.dz * s[s2v.z]];
       var index = v[0] + v[1] * me.mri.dim[0] + v[2] * me.mri.dim[0] * me.mri.dim[1];
 
@@ -451,11 +448,11 @@ function MRIViewer(myParams) {
     /**
     * @func S2IJK
     * @description Convert screen coordinates to voxel coordinates
-    * @param s array Screen coordinates x, y and slice
-    * @return array The voxel coordinates [i, j, k], 0<=j<i<dim0, 0<=k<dim2
+    * @param {array} s Screen coordinates x, y and slice
+    * @return {array} The voxel coordinates [i, j, k], 0<=j<i<dim0, 0<=k<dim2
     */
     S2IJK: function S2IJK(s) {
-      var s2v = me.mri.s2v;
+      var {s2v} = me.mri;
       var v = [s2v.X + s2v.dx * s[s2v.x], s2v.Y + s2v.dy * s[s2v.y], s2v.Z + s2v.dz * s[s2v.z]];
 
       return [v[0]|0, v[1]|0, v[2]|0];
@@ -464,11 +461,11 @@ function MRIViewer(myParams) {
     /**
     * @func IJK2S
     * @description Convert voxel coordinates to screen coordinates
-    * @param s array Voxel coordinates i, j and k
-    * @return array The screen coordinates [x, y, slice]
+    * @param {array} ijk Voxel coordinates i, j and k
+    * @return {array} The screen coordinates [x, y, slice]
     */
     IJK2S: function IJK2S(ijk) {
-      var s2v = me.mri.s2v;
+      var {s2v} = me.mri;
       var s = [];
       s[s2v.x] = (ijk[0] - s2v.X)/s2v.dx;
       s[s2v.y] = (ijk[1] - s2v.Y)/s2v.dy;
@@ -479,9 +476,9 @@ function MRIViewer(myParams) {
 
     drawScreenSpace: function drawScreenSpace(view) {
       const {plane, slice} = view;
-      var x, y, i;
+      var i, x, y;
       var val;
-      const {W, H, D, Wdim, Hdim} = me.dimensions.world[plane];
+      const {W, H} = me.dimensions.world[plane];
       var s, s2v = me.mri.s2v;
       var c, sz = me.mri.dim[0] * me.mri.dim[1] * me.mri.dim[2];
 
@@ -524,8 +521,9 @@ function MRIViewer(myParams) {
           view.offPixelBuffer.data[i + 3] = c[3];
         }
       }
-      let ctx = view.canvas.getContext("2d");
+      const ctx = view.canvas.getContext("2d");
       ctx.putImageData(view.offPixelBuffer, 0, 0);
+
       /*
       view.offContext.putImageData(view.offPixelBuffer, 0, 0);
       let imageData = me.offCanvas.toDataURL();
@@ -535,11 +533,12 @@ function MRIViewer(myParams) {
     },
 
     /**
+     * @func trilinear
     * @desc Code from http://paulbourke.net/miscellaneous/interpolation/
     */
     trilinear: function trilinear(x, y, z) {
-      const dim = me.mri.dim;
-      const data = me.mri.data;
+      const {dim} = me.mri;
+      const {data} = me.mri;
       let [i, j, k] = [parseInt(x), parseInt(y), parseInt(z)];
       const V000 = data[ k   *dim[1]*dim[0] +  j   *dim[0] +  i]   |0;
       const V100 = data[ k   *dim[1]*dim[0] +  j   *dim[0] + (i+1)]|0;
@@ -573,7 +572,7 @@ function MRIViewer(myParams) {
     */
     A2Value: function A2Value(a) {
       const v = me.mri.multMatVec(me.mri.MatrixMm2Vox, a);
-      const dim = me.mri.dim;
+      const {dim} = me.mri;
       const [x, y, z] = [parseInt(v[0]), parseInt(v[1]), parseInt(v[2])];
       if(x<0 || x>=dim[0] || y<0 || y>=dim[1] || z<0 || z>=dim[2]) {
         return 0;
@@ -585,10 +584,12 @@ function MRIViewer(myParams) {
     /**
     * @func A2I
     * @desc Compute the voxel index corresponding to an absolute space coordinate
+    * @param {number} a Coordinate in absolute space
+    * @returns {number} i Voxel index for that absolute spacecoordinate
     */
     A2I: function A2I(a) {
       const v = me.mri.multMatVec(me.mri.MatrixMm2Vox, a);
-      const dim = me.mri.dim;
+      const {dim} = me.mri;
       const [x, y, z] = [parseInt(v[0]), parseInt(v[1]), parseInt(v[2])];
       if(x<0 || x>=dim[0] || y<0 || y>=dim[1] || z<0 || z>=dim[2]) {
         return;
@@ -599,10 +600,10 @@ function MRIViewer(myParams) {
     },
 
     drawAbsoluteSpace: function drawAbsoluteSpace(view) {
-      let {plane, slice} = view;
-      var x, y, i;
+      const {plane, slice} = view;
+      var i, x, y;
       var val;
-      let {W, H, D, Wdim: pix} = me.dimensions.absolute[plane];
+      const {W, H, D, Wdim: pix} = me.dimensions.absolute[plane];
       var a, w2v = me.mri.mm2vox;
       var c, sz = me.mri.dim[0] * me.mri.dim[1] * me.mri.dim[2];
 
@@ -631,14 +632,14 @@ function MRIViewer(myParams) {
                 255 * me.mri.data[i] / me.maxValue,
                 255 * me.mri.data[i + sz] / me.maxValue,
                 255 * me.mri.data[i + 2 * sz] / me.maxValue,
-                255,
+                255
               ];
             } else {
               val = 255 * me.mri.data[i] / me.maxValue;
               c = [val, val, val, 255];
             }
           } else {
-            c = [130, 60, 60, 255];
+            c = [0, 0, 0, 100];
           }
 
           if( y === parseInt(H/2) || x === parseInt(W/2)) {
@@ -653,8 +654,9 @@ function MRIViewer(myParams) {
         }
       }
 
-      let ctx = view.canvas.getContext("2d");
+      const ctx = view.canvas.getContext("2d");
       ctx.putImageData(view.offPixelBuffer, 0, 0);
+
       /*
       view.offContext.putImageData(view.offPixelBuffer, 0, 0);
       let imageData = me.offCanvas.toDataURL();
@@ -692,9 +694,11 @@ function MRIViewer(myParams) {
     },
 
     /**
+     * @func setSpace
     * @desc Changes the space in which the data is displayed, updates the image and
     *   information
-    * @param space string Space string: voxel, world or absolute
+    * @param {string} space Space string: voxel, world or absolute
+    * @returns {void}
     */
     setSpace: function setSpace(space) {
       let view;
@@ -708,12 +712,14 @@ function MRIViewer(myParams) {
     },
 
     /**
+     * @func setSlice
     * @desc Sets the slice displayed in the specified viewer
-    * @param slice number Slice number
-    * @param view object View object
+    * @param {object} view View object
+    * @param {number} slice Slice number
+    * @returns {void}
     */
     setSlice: function setSlice(view, slice) {
-      let slider = view.elem.getElementsByClassName('slice')[0];
+      let [slider] = view.elem.getElementsByClassName('slice');
       var maxSlice;
 
       // Check that slice number is within the interval [0, max)
@@ -737,7 +743,7 @@ function MRIViewer(myParams) {
     },
 
     info1: function info1(view) {
-      let N = view.elem.getElementsByClassName('N')[0];
+      const [N] = view.elem.getElementsByClassName('N');
       switch (me.space) {
         case 'voxel':
           switch (view.plane) {
@@ -766,7 +772,7 @@ function MRIViewer(myParams) {
           }
           break;
         case 'absolute':
-          let {W, H, D, Wdim, Hdim} = me.dimensions.absolute[view.plane];
+          let {D} = me.dimensions.absolute[view.plane];
           switch (view.plane) {
             case 'sag':
               N.innerHTML = 'LR: ' + (view.slice - parseInt(D/2));
