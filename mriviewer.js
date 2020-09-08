@@ -341,10 +341,9 @@ function MRIViewer(myParams) {
       });
     },
 
-    display: function display(updateProgress) {
-      return me.init().then(function () {
-        return me.configure(updateProgress);
-      });
+    display: async function display(updateProgress) {
+      await me.init();
+      await me.configure(updateProgress);
     },
 
     draw: function draw() {
