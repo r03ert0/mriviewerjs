@@ -284,7 +284,7 @@ function MRIViewer(myParams) {
       view.elem.style.position = 'relative';
       view.elem.innerHTML = [
         '<div class="wrap" style="position:relative;display:inline-block">',
-        '<canvas class="viewer" style="width:512px;background:rgb(44, 77, 124)"></canvas>',
+        '<canvas class="viewer" style="width:512px;background:#2c4d7c;image-rendering:pixelated"></canvas>',
         '<div class="info" style="position:absolute;top:0;left:0;width:100%;height:100%;color:white;pointer-events:none;user-select: none">',
         '<b class="N" style="position:absolute;top:0;left:0"></b>',
         '<b class="L" style="position:absolute;top:50%;left:0;color:white"></b>',
