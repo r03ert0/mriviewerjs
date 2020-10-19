@@ -4,7 +4,8 @@ function MRIViewer(myParams) {
   var me = {
     mriPath: null,          // Path to mri
     //mrijs_url: 'http://localhost/mrijs/mri.js',
-    mrijs_url: 'https://cdn.jsdelivr.net/gh/neuroanatomy/mrijs@0.0.3/mri.js',
+    // mrijs_url: '/lib/mrijs/mri.js',
+    mrijs_url: 'https://cdn.jsdelivr.net/gh/neuroanatomy/mrijs@0.0.4/mri.js',
     mri: null,              // Mri data
     views: [],              // views on the data
     space: null,            // Space: voxel, world or absolute
@@ -60,14 +61,16 @@ function MRIViewer(myParams) {
         me.mri.init()
           .then(() => {
             if(me.mriPath) {
+              me.mri.fileName = me.mriPath;
               return me.mri.loadMRIFromPath(me.mriPath, updateProgress);
             } else if(me.mriFile) {
+              me.mri.fileName = me.mriFile.name;
               return me.mri.loadMRIFromFile(me.mriFile);
             }
             reject(new Error("No data to load"));
           })
           .then(() => {
-            let arr, i, slice;
+            let arr, i;
 
             // configure dimensions
             me.configureDimensions();
@@ -108,14 +111,16 @@ function MRIViewer(myParams) {
 
             // Set maximum display grey level to 99.99% quantile
             arr = [];
-            for (i = 0; i < me.mri.data.length; i += parseInt(me.mri.data.length / 10000)) {
+            const step = Math.max(1, Math.floor(me.mri.data.length / 10000));
+            for (i = 0; i < me.mri.data.length; i += step) {
               arr.push(me.mri.data[i]);
             }
             arr = arr.sort(function (a, b) { return a - b; });
-            me.maxValue = arr[9999];
+            me.maxValue = arr[arr.length-1];
 
             // Draw
             me.draw();
+            me.info();
 
             // Resolve
             resolve();
@@ -128,10 +133,10 @@ function MRIViewer(myParams) {
     configureDimensions: function configureDimensions() {
       let space;
       const spaces = ['voxel', 'world', 'absolute'];
-      const views = ['sag', 'cor', 'axi'];
       let dimensions = {};
-      let maxpix = Math.max(...me.mri.s2v.wpixdim);
-      let max = Math.round(1.3 * Math.max(...me.mri.s2v.sdim));
+      const {sdim, wpixdim} = me.mri.s2v;
+      const medpix = wpixdim.sort()[1]; // maxpix = Math.max(...me.mri.s2v.wpixdim);
+      let max = Math.round(1.3 * Math.max(...sdim.map((v, i) => v*wpixdim[i]/medpix)));
 
       dimensions = {
         voxel: {
@@ -144,7 +149,7 @@ function MRIViewer(myParams) {
         },
         absolute: {
           dim: [max, max, max],
-          pixdim: me.mri.s2v.wpixdim
+          pixdim: [medpix, medpix, medpix] // [maxpix, maxpix, maxpix] // me.mri.s2v.wpixdim
         }
       };
 
@@ -182,7 +187,7 @@ function MRIViewer(myParams) {
       for(view of me.views) {
         //const {W, H, D, Wdim, Hdim} = me.dimensions[me.space][view.plane];
         const {D} = me.dimensions[me.space][view.plane];
-        view.slice = parseInt((D - 1)/2);
+        view.slice = Math.floor(D/2);
         view.slider.max = view.maxSlice;
         view.slider.value = view.slice;
         console.log("plane:", view.plane, "max slice:", view.slider.max, "actual slice:", view.slider.value);
@@ -298,7 +303,7 @@ function MRIViewer(myParams) {
         '<br />'
       ].join('\n');
       var [slice] = view.elem.getElementsByClassName('slice');
-      slice.addEventListener('input', function () { me.setSlice(view, parseInt(this.value)); });
+      slice.addEventListener('input', function () { me.setSlice(view, Math.floor(this.value)); });
     },
 
     addPlaneSelectUI: function addPlaneSelectUI(view) {
@@ -536,17 +541,16 @@ function MRIViewer(myParams) {
     * @desc Code from http://paulbourke.net/miscellaneous/interpolation/
     */
     trilinear: function trilinear(x, y, z) {
-      const {dim} = me.mri;
-      const {data} = me.mri;
-      let [i, j, k] = [parseInt(x), parseInt(y), parseInt(z)];
-      const V000 = data[ k   *dim[1]*dim[0] +  j   *dim[0] +  i]   |0;
-      const V100 = data[ k   *dim[1]*dim[0] +  j   *dim[0] + (i+1)]|0;
-      const V010 = data[ k   *dim[1]*dim[0] + (j+1)*dim[0] +  i]   |0;
-      const V001 = data[(k+1)*dim[1]*dim[0] +  j   *dim[0] +  i]   |0;
-      const V101 = data[(k+1)*dim[1]*dim[0] +  j   *dim[0] + (i+1)]|0;
-      const V011 = data[(k+1)*dim[1]*dim[0] + (j+1)*dim[0] +  i]   |0;
-      const V110 = data[ k   *dim[1]*dim[0] + (j+1)*dim[0] + (i+1)]|0;
-      const V111 = data[(k+1)*dim[1]*dim[0] + (j+1)*dim[0] + (i+1)]|0;
+      const {dim, data} = me.mri;
+      let [i, j, k] = [Math.floor(x), Math.floor(y), Math.floor(z)];
+      const V000 = (data[ k   *dim[1]*dim[0] +  j   *dim[0] +  i]) | 0;
+      const V100 = (data[ k   *dim[1]*dim[0] +  j   *dim[0] + (i+1)]) | 0;
+      const V010 = (data[ k   *dim[1]*dim[0] + (j+1)*dim[0] +  i]) | 0;
+      const V001 = (data[(k+1)*dim[1]*dim[0] +  j   *dim[0] +  i]) | 0;
+      const V101 = (data[(k+1)*dim[1]*dim[0] +  j   *dim[0] + (i+1)]) | 0;
+      const V011 = (data[(k+1)*dim[1]*dim[0] + (j+1)*dim[0] +  i]) | 0;
+      const V110 = (data[ k   *dim[1]*dim[0] + (j+1)*dim[0] + (i+1)]) | 0;
+      const V111 = (data[(k+1)*dim[1]*dim[0] + (j+1)*dim[0] + (i+1)]) | 0;
 
       x = x - i;
       y = y - j;
@@ -572,7 +576,7 @@ function MRIViewer(myParams) {
     A2Value: function A2Value(a) {
       const v = me.mri.multMatVec(me.mri.MatrixMm2Vox, a);
       const {dim} = me.mri;
-      const [x, y, z] = [parseInt(v[0]), parseInt(v[1]), parseInt(v[2])];
+      const [x, y, z] = [Math.floor(v[0]), Math.floor(v[1]), Math.floor(v[2])];
       if(x<0 || x>=dim[0] || y<0 || y>=dim[1] || z<0 || z>=dim[2]) {
         return 0;
       }
@@ -589,7 +593,7 @@ function MRIViewer(myParams) {
     A2I: function A2I(a) {
       const v = me.mri.multMatVec(me.mri.MatrixMm2Vox, a);
       const {dim} = me.mri;
-      const [x, y, z] = [parseInt(v[0]), parseInt(v[1]), parseInt(v[2])];
+      const [x, y, z] = [Math.floor(v[0]), Math.floor(v[1]), Math.floor(v[2])];
       if(x<0 || x>=dim[0] || y<0 || y>=dim[1] || z<0 || z>=dim[2]) {
         return;
       }
@@ -603,8 +607,9 @@ function MRIViewer(myParams) {
       var i, x, y;
       var val;
       const {W, H, D, Wdim: pix} = me.dimensions.absolute[plane];
-      var a, w2v = me.mri.mm2vox;
+      var a;
       var c, sz = me.mri.dim[0] * me.mri.dim[1] * me.mri.dim[2];
+      const opacity = 0.3;
 
       // Check if offscreen canvas size needs to be updated
       if( view.offCanvas.width !== W || view.offCanvas.height !== H) {
@@ -613,18 +618,18 @@ function MRIViewer(myParams) {
         view.offPixelBuffer = view.offContext.getImageData(0, 0, W, H);
       }
 
-      for (y = 0; y <= H; y++) {
-        for (x = 0; x <= W; x++) {
+      for (y = 0; y < H; y++) {
+        for (x = 0; x < W; x++) {
           switch (plane) {
-            case 'sag': a = [(slice - parseInt(D/2)), (x - parseInt(W/2)), (parseInt(H/2) - 1 - y)]; break;
-            case 'cor': a = [(x - parseInt(W/2)), (slice - parseInt(D/2)), (parseInt(H/2) - 1 - y)]; break;
-            case 'axi': a = [(x - parseInt(W/2)), (parseInt(H/2) - 1 - y), (slice - parseInt(D/2))]; break;
+            case 'sag': a = [(slice - Math.floor(D/2)), (x - Math.floor(W/2)), (Math.floor(H/2 - 0.5) - y)]; break;
+            case 'cor': a = [(x - Math.floor(W/2)), (slice - Math.floor(D/2)), (Math.floor(H/2 - 0.5) - y)]; break;
+            case 'axi': a = [(x - Math.floor(W/2)), (Math.floor(H/2 - 0.5) - y), (slice - Math.floor(D/2))]; break;
           }
           a[0]*=pix;
           a[1]*=pix;
           a[2]*=pix;
           i = me.A2I(a);
-          if(i) {
+          if(typeof i !== "undefined") {
           // Draw 1d (anatomy) and 3d (colour dti) voxels
             if (me.mri.datadim === 3) {
               c = [
@@ -634,15 +639,22 @@ function MRIViewer(myParams) {
                 255
               ];
             } else {
-              val = 255 * me.mri.data[i] / me.maxValue;
+              // val = 255 * me.mri.data[i] / me.maxValue;
+              val = 255 * me.A2Value(a) / me.maxValue;
               c = [val, val, val, 255];
             }
           } else {
             c = [0, 0, 0, 100];
           }
 
-          if( y === parseInt(H/2) || x === parseInt(W/2)) {
-            c = [c[0]/2+255/2, c[1]/2+255/2, c[2]/2+255/2, 255];
+          // plot 0 axes
+          if( y === Math.floor(H/2 - 0.5) || x === Math.floor(W/2)) {
+            c = [
+              (1-opacity)*c[0] + opacity*44*2,
+              (1-opacity)*c[1] + opacity*77*2,
+              (1-opacity)*c[2] + opacity*124*2,
+              c[3]
+            ];
           }
 
           i = (y * view.offCanvas.width + x) * 4;
@@ -655,13 +667,6 @@ function MRIViewer(myParams) {
 
       const ctx = view.canvas.getContext("2d");
       ctx.putImageData(view.offPixelBuffer, 0, 0);
-
-      /*
-      view.offContext.putImageData(view.offPixelBuffer, 0, 0);
-      let imageData = me.offCanvas.toDataURL();
-
-      return imageData;
-      */
     },
 
     /**
@@ -679,7 +684,7 @@ function MRIViewer(myParams) {
       view.maxSlice = me.dimensions[me.space][plane].D - 1;
 
       const {W, H, D, Wdim, Hdim} = me.dimensions[me.space][plane];
-      view.slice = parseInt((D - 1)/2);
+      view.slice = Math.floor((D - 1)/2);
       view.slider.max = view.maxSlice;
       view.slider.value = view.slice;
       view.canvas.width = W;
@@ -774,13 +779,13 @@ function MRIViewer(myParams) {
           let {D} = me.dimensions.absolute[view.plane];
           switch (view.plane) {
             case 'sag':
-              N.innerHTML = 'LR: ' + (view.slice - parseInt(D/2));
+              N.innerHTML = 'LR: ' + (view.slice - Math.floor(D/2));
               break;
             case 'cor':
-              N.innerHTML = 'PA: ' + (view.slice - parseInt(D/2));
+              N.innerHTML = 'PA: ' + (view.slice - Math.floor(D/2));
               break;
             case 'axi':
-              N.innerHTML = 'IS: ' + (view.slice - parseInt(D/2));
+              N.innerHTML = 'IS: ' + (view.slice - Math.floor(D/2));
               break;
           }
           break;
