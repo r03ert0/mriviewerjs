@@ -3,9 +3,8 @@
 function MRIViewer(myParams) {
   var me = {
     mriPath: null,          // Path to mri
-    //mrijs_url: 'http://localhost/mrijs/mri.js',
-    // mrijs_url: '/lib/mrijs/mri.js',
-    mrijs_url: 'https://cdn.jsdelivr.net/gh/neuroanatomy/mrijs@0.0.5/mri.js',
+    // mrijs_url: 'http://localhost/mrijs-neuroanatomy/mri.js',
+    mrijs_url: 'https://cdn.jsdelivr.net/gh/neuroanatomy/mrijs@0.0.6/mri.js',
     mri: null,              // Mri data
     views: [],              // views on the data
     space: null,            // Space: voxel, world or absolute
@@ -49,85 +48,87 @@ function MRIViewer(myParams) {
       return pr;
     },
 
-    configure: function configure(updateProgress) {
+    configure: async function configure(updateProgress) {
     // Display loading message
       for(const view of me.views) {
         view.innerHTML = '<b>Loading...</b>';
       }
 
-      var pr = new Promise((resolve, reject) => {
       // Load MRI
-        me.mri = new MRI();
-        me.mri.init()
-          .then(() => {
-            if(me.mriPath) {
-              me.mri.fileName = me.mriPath;
-              return me.mri.loadMRIFromPath(me.mriPath, updateProgress);
-            } else if(me.mriFile) {
-              me.mri.fileName = me.mriFile.name;
-              return me.mri.loadMRIFromFile(me.mriFile);
-            }
-            reject(new Error("No data to load"));
-          })
-          .then(() => {
-            let arr, i;
+      me.mri = new MRI();
+      await me.mri.init();
 
-            // configure dimensions
-            me.configureDimensions();
+      if(me.mriPath) {
+        me.mri.fileName = me.mriPath;
+        try {
+          await me.mri.loadMRIFromPath(me.mriPath, updateProgress);
+        } catch(err) {
+          console.log(err);
+          throw new Error(err);
+        }
+      } else if(me.mriFile) {
+        me.mri.fileName = me.mriFile.name;
+        try {
+          await me.mri.loadMRIFromFile(me.mriFile);
+        } catch(err) {
+          console.log(err);
+          throw new Error(err);
+        }
+      } else {
+        throw new Error("Neither a file nor a path were specified");
+      }
 
-            // Set default space
-            if(!me.space) {
-              me.space = 'absolute';
-            }
+      let arr, i;
 
-            // Set view defaults
-            for(const view of me.views) {
-              me.makeGUI(view);
-              if(view.addPlaneSelect) {
-                me.addPlaneSelectUI(view);
-              }
-              if(view.addSpaceSelect) {
-                me.addSpaceSelectUI(view);
-              }
-              [view.canvas] = view.elem.getElementsByTagName('canvas');
-              [view.slider] = view.elem.getElementsByClassName('slice');
-              view.maxSlice = me.dimensions[me.space][view.plane].D - 1;
+      // configure dimensions
+      me.configureDimensions();
 
-              // Create view's offscreen canvas, and get their contexts
-              view.offCanvas = document.createElement('canvas');
-              view.offContext = view.offCanvas.getContext('2d');
-            }
+      // Set default space
+      if(!me.space) {
+        me.space = 'absolute';
+      }
 
-            // configure canvas size based on volume dimensions and space
-            me.configureCanvasSize();
+      // Set view defaults
+      for(const view of me.views) {
+        me.makeGUI(view);
+        if(view.addPlaneSelect) {
+          me.addPlaneSelectUI(view);
+        }
+        if(view.addSpaceSelect) {
+          me.addSpaceSelectUI(view);
+        }
+        [view.canvas] = view.elem.getElementsByTagName('canvas');
+        [view.slider] = view.elem.getElementsByClassName('slice');
+        view.maxSlice = me.dimensions[me.space][view.plane].D - 1;
 
-            // configure slice sliders
-            me.configureSliders();
+        // Create view's offscreen canvas, and get their contexts
+        view.offCanvas = document.createElement('canvas');
+        view.offContext = view.offCanvas.getContext('2d');
+      }
 
-            // Configure information
-            for(const view of me.views) {
-              me.configureInformation(view);
-            }
+      // configure canvas size based on volume dimensions and space
+      me.configureCanvasSize();
 
-            // Set maximum display grey level to 99.99% quantile
-            arr = [];
-            const step = Math.max(1, Math.floor(me.mri.data.length / 10000));
-            for (i = 0; i < me.mri.data.length; i += step) {
-              arr.push(me.mri.data[i]);
-            }
-            arr = arr.sort(function (a, b) { return a - b; });
-            me.maxValue = arr[arr.length-1];
+      // configure slice sliders
+      me.configureSliders();
 
-            // Draw
-            me.draw();
-            me.info();
+      // Configure information
+      for(const view of me.views) {
+        me.configureInformation(view);
+      }
 
-            // Resolve
-            resolve();
-          });
-      });
+      // Set maximum display grey level to 99.99% quantile
+      arr = [];
+      const step = Math.max(1, Math.floor(me.mri.data.length / 10000));
+      for (i = 0; i < me.mri.data.length; i += step) {
+        arr.push(me.mri.data[i]);
+      }
+      arr = arr.sort(function (a, b) { return a - b; });
+      me.maxValue = arr[arr.length-1];
 
-      return pr;
+      // Draw
+      me.draw();
+      me.info();
     },
 
     configureDimensions: function configureDimensions() {
@@ -347,8 +348,12 @@ function MRIViewer(myParams) {
     },
 
     display: async function display(updateProgress) {
-      await me.init();
-      await me.configure(updateProgress);
+      try {
+        await me.init();
+        await me.configure(updateProgress);
+      } catch(err) {
+        throw new Error(err);
+      }
     },
 
     draw: function draw() {
