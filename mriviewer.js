@@ -5,7 +5,7 @@ function MRIViewer(myParams) {
     mriPath: null,          // Path to mri
     //mrijs_url: 'http://localhost/mrijs/mri.js',
     // mrijs_url: '/lib/mrijs/mri.js',
-    mrijs_url: 'https://cdn.jsdelivr.net/gh/neuroanatomy/mrijs@0.0.4/mri.js',
+    mrijs_url: 'https://cdn.jsdelivr.net/gh/neuroanatomy/mrijs@0.0.5/mri.js',
     mri: null,              // Mri data
     views: [],              // views on the data
     space: null,            // Space: voxel, world or absolute
