@@ -548,14 +548,14 @@ function MRIViewer(myParams) {
     trilinear: function trilinear(x, y, z) {
       const {dim, data} = me.mri;
       let [i, j, k] = [Math.floor(x), Math.floor(y), Math.floor(z)];
-      const V000 = (data[ k   *dim[1]*dim[0] +  j   *dim[0] +  i]) | 0;
-      const V100 = (data[ k   *dim[1]*dim[0] +  j   *dim[0] + (i+1)]) | 0;
-      const V010 = (data[ k   *dim[1]*dim[0] + (j+1)*dim[0] +  i]) | 0;
-      const V001 = (data[(k+1)*dim[1]*dim[0] +  j   *dim[0] +  i]) | 0;
-      const V101 = (data[(k+1)*dim[1]*dim[0] +  j   *dim[0] + (i+1)]) | 0;
-      const V011 = (data[(k+1)*dim[1]*dim[0] + (j+1)*dim[0] +  i]) | 0;
-      const V110 = (data[ k   *dim[1]*dim[0] + (j+1)*dim[0] + (i+1)]) | 0;
-      const V111 = (data[(k+1)*dim[1]*dim[0] + (j+1)*dim[0] + (i+1)]) | 0;
+      const V000 = (data[ k   *dim[1]*dim[0] +  j   *dim[0] +  i]) || 0;
+      const V100 = (data[ k   *dim[1]*dim[0] +  j   *dim[0] + (i+1)]) || 0;
+      const V010 = (data[ k   *dim[1]*dim[0] + (j+1)*dim[0] +  i]) || 0;
+      const V001 = (data[(k+1)*dim[1]*dim[0] +  j   *dim[0] +  i]) || 0;
+      const V101 = (data[(k+1)*dim[1]*dim[0] +  j   *dim[0] + (i+1)]) || 0;
+      const V011 = (data[(k+1)*dim[1]*dim[0] + (j+1)*dim[0] +  i]) || 0;
+      const V110 = (data[ k   *dim[1]*dim[0] + (j+1)*dim[0] + (i+1)]) || 0;
+      const V111 = (data[(k+1)*dim[1]*dim[0] + (j+1)*dim[0] + (i+1)]) || 0;
 
       x = x - i;
       y = y - j;
